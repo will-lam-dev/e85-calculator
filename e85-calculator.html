@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E85 Fuel Mix Calculator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .calculator {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-section, .result-section {
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #3498db;
+            font-size: 1.3em;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .result-box {
+            background-color: #e8f4f8;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-label {
+            font-weight: 500;
+        }
+        .result-value {
+            font-weight: bold;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        .info {
+            background-color: #f8f4e8;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <h1>E85 Fuel Mix Calculator</h1>
+    
+    <div class="calculator">
+        <div class="input-section">
+            <h2>Input Values</h2>
+            
+            <div class="form-group">
+                <label for="desiredEthanol">Desired Ethanol Content (%):</label>
+                <input type="number" id="desiredEthanol" min="0" max="85" step="0.1" value="30" oninput="calculateMix()">
+            </div>
+            
+            <div class="form-group">
+                <label for="totalFuel">Total Fuel (Gallons):</label>
+                <input type="number" id="totalFuel" min="0" step="0.1" value="10" oninput="calculateMix()">
+            </div>
+            
+            <div class="form-group">
+                <label for="e85Blend">E85 Blend (% Ethanol):</label>
+                <input type="number" id="e85Blend" min="0" max="100" step="0.1" value="85" oninput="calculateMix()">
+            </div>
+            
+            <div class="form-group">
+                <label for="gasBlend">Gas Blend (% Ethanol):</label>
+                <input type="number" id="gasBlend" min="0" max="100" step="0.1" value="10" oninput="calculateMix()">
+            </div>
+            
+            <div class="form-group">
+                <label for="gasOctane">Gas Octane Rating:</label>
+                <input type="number" id="gasOctane" min="0" max="150" step="0.1" value="91" oninput="calculateMix()">
+            </div>
+            
+            <div class="form-group">
+                <label for="e85Octane">E85 Octane Rating:</label>
+                <input type="number" id="e85Octane" min="0" max="150" step="0.1" value="105" oninput="calculateMix()">
+            </div>
+        </div>
+        
+        <div class="result-section">
+            <h2>Results</h2>
+            
+            <div class="result-box">
+                <span class="result-label">Octane Rating:</span>
+                <span class="result-value" id="octaneResult">-</span>
+            </div>
+            
+            <div class="result-box">
+                <span class="result-label">Stoichiometric Ratio:</span>
+                <span class="result-value" id="stoichResult">-</span>
+            </div>
+            
+            <div class="result-box">
+                <span class="result-label">Gallons of Gas:</span>
+                <span class="result-value" id="gasResult">-</span>
+            </div>
+            
+            <div class="result-box">
+                <span class="result-label">Gallons of E85:</span>
+                <span class="result-value" id="e85Result">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info">
+        <h3>About This Calculator</h3>
+        <p>This calculator helps you determine the optimal mix of regular gasoline and E85 to achieve your desired ethanol content.</p>
+        <p>The stoichiometric ratio represents the ideal air-to-fuel ratio for complete combustion. As ethanol content increases, this ratio decreases (from ~14.7:1 for pure gasoline to ~9.8:1 for pure ethanol).</p>
+        <p>Higher ethanol content typically results in higher octane ratings, which can benefit performance in properly tuned engines.</p>
+    </div>
+
+    <script>
+        // Calculate the mix when the page loads
+        window.onload = calculateMix;
+        
+        function calculateMix() {
+            // Get input values
+            const desiredEthanol = parseFloat(document.getElementById("desiredEthanol").value) || 0;
+            const totalFuel = parseFloat(document.getElementById("totalFuel").value) || 0;
+            const e85Blend = parseFloat(document.getElementById("e85Blend").value) || 85;
+            const gasBlend = parseFloat(document.getElementById("gasBlend").value) || 10;
+            const gasOctane = parseFloat(document.getElementById("gasOctane").value) || 91;
+            const e85Octane = parseFloat(document.getElementById("e85Octane").value) || 105;
+            
+            // Validate inputs
+            if (totalFuel <= 0) {
+                displayError("Total fuel must be greater than 0");
+                return;
+            }
+            
+            if (desiredEthanol < gasBlend || desiredEthanol > e85Blend) {
+                displayError("Desired ethanol must be between gas and E85 ethanol content");
+                return;
+            }
+            
+            // Calculate E85 and gas volumes
+            // Formula: e85Volume = totalFuel * (desiredEthanol - gasBlend) / (e85Blend - gasBlend)
+            const e85Volume = totalFuel * (desiredEthanol - gasBlend) / (e85Blend - gasBlend);
+            const gasVolume = totalFuel - e85Volume;
+            
+            // Calculate resulting octane rating (linear interpolation)
+            const e85Fraction = e85Volume / totalFuel;
+            const octaneRating = gasOctane + (e85Octane - gasOctane) * e85Fraction;
+            
+            // Calculate stoichiometric ratio
+            // 14.7 is for pure gasoline (0% ethanol), 9.0 is for pure ethanol (100% ethanol)
+            // This is a simplified linear interpolation
+            const gasolineStoich = 14.7;
+            const ethanolStoich = 9.0;
+            const stoichRatio = gasolineStoich - ((desiredEthanol / 100) * (gasolineStoich - ethanolStoich));
+            
+            // Display results
+            document.getElementById("octaneResult").textContent = octaneRating.toFixed(1);
+            document.getElementById("stoichResult").textContent = stoichRatio.toFixed(2) + ":1";
+            document.getElementById("gasResult").textContent = gasVolume.toFixed(2);
+            document.getElementById("e85Result").textContent = e85Volume.toFixed(2);
+            
+            // Remove any error styling
+            clearError();
+        }
+        
+        function displayError(message) {
+            document.getElementById("octaneResult").textContent = "-";
+            document.getElementById("stoichResult").textContent = "-";
+            document.getElementById("gasResult").textContent = message;
+            document.getElementById("e85Result").textContent = "-";
+            
+            document.getElementById("gasResult").style.color = "#e74c3c";
+        }
+        
+        function clearError() {
+            document.getElementById("gasResult").style.color = "#2c3e50";
+        }
+    </script>
+</body>
+</html>
